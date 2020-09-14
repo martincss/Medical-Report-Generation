@@ -427,56 +427,56 @@ class LSTMDebugger(DebuggerBase):
 
     def _epoch_val(self):
         tag_loss, stop_loss, word_loss, loss = 0, 0, 0, 0
-        # self.extractor.eval()
-        # self.mlc.eval()
-        # self.co_attention.eval()
-        # self.sentence_model.eval()
-        # self.word_model.eval()
-        #
-        # for i, (images, _, label, captions, prob) in enumerate(self.val_data_loader):
-        #     batch_tag_loss, batch_stop_loss, batch_word_loss, batch_loss = 0, 0, 0, 0
-        #     images = self._to_var(images, requires_grad=False)
-        #
-        #     visual_features, avg_features = self.extractor.forward(images)
-        #     tags, semantic_features = self.mlc.forward(avg_features)
-        #
-        #     batch_tag_loss = self.mse_criterion(tags, self._to_var(label, requires_grad=False)).sum()
-        #
-        #     sentence_states = None
-        #     prev_hidden_states = self._to_var(torch.zeros(images.shape[0], 1, self.args.hidden_size))
-        #
-        #     context = self._to_var(torch.Tensor(captions).long(), requires_grad=False)
-        #     prob_real = self._to_var(torch.Tensor(prob).long(), requires_grad=False)
-        #
-        #     for sentence_index in range(captions.shape[1]):
-        #         ctx, v_att, a_att = self.co_attention.forward(avg_features,
-        #                                                       semantic_features,
-        #                                                       prev_hidden_states)
-        #
-        #         topic, p_stop, hidden_states, sentence_states = self.sentence_model.forward(ctx,
-        #                                                                                     prev_hidden_states,
-        #                                                                                     sentence_states)
-        #         print("p_stop:{}".format(p_stop.squeeze()))
-        #         print("prob_real:{}".format(prob_real[:, sentence_index]))
-        #
-        #         batch_stop_loss += self.ce_criterion(p_stop.squeeze(), prob_real[:, sentence_index]).sum()
-        #
-        #         for word_index in range(1, captions.shape[2]):
-        #             words = self.word_model.forward(topic, context[:, sentence_index, :word_index])
-        #             word_mask = (context[:, sentence_index, word_index] > 0).float()
-        #             batch_word_loss += (self.ce_criterion(words, context[:, sentence_index, word_index])
-        #                                 * word_mask).sum()
-        #             print("words:{}".format(torch.max(words, 1)[1]))
-        #             print("real:{}".format(context[:, sentence_index, word_index]))
-        #
-        #     batch_loss = self.args.lambda_tag * batch_tag_loss \
-        #                  + self.args.lambda_stop * batch_stop_loss \
-        #                  + self.args.lambda_word * batch_word_loss
-        #
-        #     tag_loss += self.args.lambda_tag * batch_tag_loss.data
-        #     stop_loss += self.args.lambda_stop * batch_stop_loss.data
-        #     word_loss += self.args.lambda_word * batch_word_loss.data
-        #     loss += batch_loss.data
+        self.extractor.eval()
+        self.mlc.eval()
+        self.co_attention.eval()
+        self.sentence_model.eval()
+        self.word_model.eval()
+
+        for i, (images, _, label, captions, prob) in enumerate(self.val_data_loader):
+            batch_tag_loss, batch_stop_loss, batch_word_loss, batch_loss = 0, 0, 0, 0
+            images = self._to_var(images, requires_grad=False)
+
+            visual_features, avg_features = self.extractor.forward(images)
+            tags, semantic_features = self.mlc.forward(avg_features)
+
+            batch_tag_loss = self.mse_criterion(tags, self._to_var(label, requires_grad=False)).sum()
+
+            sentence_states = None
+            prev_hidden_states = self._to_var(torch.zeros(images.shape[0], 1, self.args.hidden_size))
+
+            context = self._to_var(torch.Tensor(captions).long(), requires_grad=False)
+            prob_real = self._to_var(torch.Tensor(prob).long(), requires_grad=False)
+
+            for sentence_index in range(captions.shape[1]):
+                ctx, v_att, a_att = self.co_attention.forward(avg_features,
+                                                              semantic_features,
+                                                              prev_hidden_states)
+
+                topic, p_stop, hidden_states, sentence_states = self.sentence_model.forward(ctx,
+                                                                                            prev_hidden_states,
+                                                                                            sentence_states)
+                print("p_stop:{}".format(p_stop.squeeze()))
+                print("prob_real:{}".format(prob_real[:, sentence_index]))
+
+                batch_stop_loss += self.ce_criterion(p_stop.squeeze(), prob_real[:, sentence_index]).sum()
+
+                for word_index in range(1, captions.shape[2]):
+                    words = self.word_model.forward(topic, context[:, sentence_index, :word_index])
+                    word_mask = (context[:, sentence_index, word_index] > 0).float()
+                    batch_word_loss += (self.ce_criterion(words, context[:, sentence_index, word_index])
+                                        * word_mask).sum()
+                    print("words:{}".format(torch.max(words, 1)[1]))
+                    print("real:{}".format(context[:, sentence_index, word_index]))
+
+            batch_loss = self.args.lambda_tag * batch_tag_loss \
+                         + self.args.lambda_stop * batch_stop_loss \
+                         + self.args.lambda_word * batch_word_loss
+
+            tag_loss += self.args.lambda_tag * batch_tag_loss.data
+            stop_loss += self.args.lambda_stop * batch_stop_loss.data
+            word_loss += self.args.lambda_word * batch_word_loss.data
+            loss += batch_loss.data
 
         return tag_loss, stop_loss, word_loss, loss
 
